@@ -59,23 +59,6 @@ export default function NumberSelection() {
 
 
   useEffect(() => {
-    // Define the provider
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-  
-    // Fetch the contract balance
-    const fetchContractBalance = async () => {
-      try {
-        const balance = await provider.getBalance(Lotto_ADDRESS);
-        setContractBalance(balance);
-      } catch (error) {
-        console.error('Error fetching contract balance:', error);
-      }
-    };
-
-    fetchContractBalance();
-  }, [Lotto_ADDRESS]);
-
-  useEffect(() => {
     if (getEth) {
       let temp = getEth;
       setEthSale(temp);
@@ -233,7 +216,7 @@ const enterLotto = async () => {
   <h1>DGEN Lotto Draw #{ethSale.toString()}</h1>
 </div>
     <h1 className="second-h1" style={{ textAlign: 'center' }}>Live draw 8pm (Singapore timezone) Sunday 27 August. </h1>
-    <h1 className="second-h1" style={{ textAlign: 'center' }}>Current Prizepool {truncate(ethers.utils.formatEther((contractBalance )), 4)} MATIC</h1>
+    <h1 className="second-h1" style={{ textAlign: 'center' }}>Current Prizepool 1604 MATIC</h1>
     <div style={{ textAlign: 'center'}}>Select 3 Numbers: 0.1 matic per game</div>
 
       {/* Add the select box to choose the number of games */}
