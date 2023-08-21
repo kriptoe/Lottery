@@ -230,21 +230,6 @@ const enterLotto = async () => {
   <div style={{ height: '20px' }} />
   <div className="container" style={{ backgroundColor: '#fff', padding: '10px', margin: '0 auto', borderRadius: '20px', maxWidth: '600px' }}>
   
-  <div style={{ textAlign: 'center' }}>
-  <h1>DGEN Lotto Draw #{ethSale.toString()}</h1>
-  <Image
-    src="/caeser.jpg"
-    alt="NFT"
-    width={250}
-    height={320}
-    style={{
-      display: 'block', // Make the image a block element for margin auto to work
-      margin: '0 auto', // Center align the image horizontally
-      borderRadius: '20%', // Make the border circular
-      border: '2px solid #ccc', // Add a border around the circular image
-    }}
-  />
-</div>
     <h1 className="second-h1" style={{ textAlign: 'center' }}>Live draw 8pm (Singapore timezone) Sunday 27 August. </h1>
     <h1 className="second-h1" style={{ textAlign: 'center' }}>Current Prizepool {truncate(ethers.utils.formatEther((contractBalance )), 4)} MATIC</h1>
     <div style={{ textAlign: 'center'}}>Select 3 Numbers: 0.1 matic per game</div>
