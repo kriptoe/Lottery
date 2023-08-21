@@ -101,86 +101,17 @@ useEffect(() => {
 
 
   const buyLottoTicket = async (numberOfTickets) => {
-    let nftID;
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-    const marketContract = new ethers.Contract(Lotto_ADDRESS, lotteryContract, provider);
-    const marketWithSigner = marketContract.connect(signer);
-  
-    try {
 
-      console.log ("flatten total price" )
-      // Flatten the selectedNumbers array to a 1-dimensional array
-      const flatSelectedNumbers = selectedNumbers.flat();
-      // Calculate the total price based on the number of tickets
-      const totalPrice =entryFeeWEI.mul(numberOfTickets);
-      
-      // Call enterLotteryBULK function with the flattened array and the dynamic price
-      let tx = await marketWithSigner.enterLotteryBULK(flatSelectedNumbers, { value: totalPrice });
-      setSubmitButtonText('Pending');
-      setIsPulsing(true); // Start the pulse animation
-      const receipt = await tx.wait();
-      setTxHash(`https://goerli.basescan.org/tx/${tx.hash}`);
-      // Reset the selected numbers after a successful transaction
-      setSelectedNumbers(Array.from({ length: numGames }, () => []));
-      setNftPurchased(true); // Set nftPurchased to true after a successful transaction
-
-    } catch (e) {
-      if (e.code === "UNPREDICTABLE_GAS_LIMIT") {
-        alert("Sorry, an error occurred while estimating gas. Has the lottery ended?.", e);
-      }
-     // alert(e);
-    } finally {
-      // Reset the submit button text after the transaction completes
-      setSubmitButtonText('Submit');
-      setIsPulsing(false); // Start the pulse animation
-      setSaleSucceeded(true); // Set saleSucceeded to true to trigger the useEffect
-     // Reset numGames to 1 after the successful transaction
-     console.log("resetting")
-      setNumGames(1);
-      setSelectedNumbers(Array.from({ length: numGames }, () => [])); // Reset selectedNumbers array
-    }
   };
   
 // Function to handle number selection for each game
 function selectNumber(number, gameIndex) {
-  setSelectedNumbers((prevSelectedNumbers) => {
-    const updatedSelectedNumbers = [...prevSelectedNumbers];
-    if (!updatedSelectedNumbers[gameIndex]) {
-      updatedSelectedNumbers[gameIndex] = [];
-    }
-    if (updatedSelectedNumbers[gameIndex].includes(number)) {
-      // Number is already selected, remove it from the array
-      updatedSelectedNumbers[gameIndex] = updatedSelectedNumbers[gameIndex].filter(
-        (n) => n !== number
-      );
-    } else {
-      // Number is not selected, add it to the array
-      if (updatedSelectedNumbers[gameIndex].length < 3) {
-        updatedSelectedNumbers[gameIndex] = [
-          ...updatedSelectedNumbers[gameIndex],
-          number,
-        ];
-      }
-    }
-    console.log('Updated selectedNumbers array:', updatedSelectedNumbers); // Add this line
-    return updatedSelectedNumbers;
-  });
+
 }
 
 // This function makes an entry into the lotto draw
 const enterLotto = async () => {
-  const selectedNumbersCount = selectedNumbers.reduce(
-    (total, numbers) => total + (numbers ? numbers.length : 0),
-    0
-  );
-  
-  if (selectedNumbersCount !== numGames * 3) {
-    alert('Please select exactly 3 numbers for each game.');
-    return;
-  }
-  console.log("enter lotto numGames", numGames)
-  buyLottoTicket(numGames);
+
 };
 
  
