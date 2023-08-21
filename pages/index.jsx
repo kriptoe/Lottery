@@ -64,8 +64,13 @@ useEffect(() => {
   }
 }, [saleSucceeded]);
 
-
-
+function handleNumGamesChange(event) {
+  const selectedValue = parseInt(event.target.value);
+  const maxNumGames = 10; // Maximum number of games
+  const newNumGames = Math.min(selectedValue, maxNumGames);
+  console.log('New numGames value:', newNumGames); // Add this line
+  setNumGames(newNumGames);
+}
 
 
   const buyLottoTicket = async (numberOfTickets) => {
@@ -183,7 +188,18 @@ const enterLotto = async () => {
       {/* Add the select box to choose the number of games */}
       <div style={{ textAlign: "center", marginBottom: "20px" }}>
         <label htmlFor="numGamesSelect">Select Number of Games: </label>
-
+        <select
+  id="numGamesSelect"
+  value={numGames}
+  onChange={handleNumGamesChange}
+  className="select-box" // Apply the class name
+>
+  {[...Array(10)].map((_, num) => (
+    <option key={num + 1} value={num + 1}>
+      {num + 1}
+    </option>
+  ))}
+</select>
       </div>
 
       {/* Generates the 30 numbers used to select from */}
