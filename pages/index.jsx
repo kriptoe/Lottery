@@ -2,7 +2,7 @@ import { fetchTokenURI } from "./utils"; // Adjust the path as needed
 import React, {  useState, useEffect } from "react";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useContractRead } from "wagmi";
-import { ethers, BigNumber } from "ethers";
+import { ethers } from "ethers";
 //import lotteryContract from "../contracts/Lottery.json"; // Raw ABI import (pulled from etherscan)
 import lotteryContract from "../contracts/Lottery.json"; // Raw ABI import (pulled from etherscan)//
 import nftContract from "../contracts/NFT.json"; // Raw ABI import (pulled from etherscan)
@@ -29,6 +29,8 @@ export default function NumberSelection() {
   const [numGames, setNumGames] = useState(1); // State to store the number of games selected
   const [nftPurchased, setNftPurchased] = useState(false); // New state for tracking NFT purchase
 
+  const [contractBalance, setContractBalance] = useState(ethers.BigNumber.from(0));
+  const entryFee = 0.1;  // entryFee approx 10cents at $1650
   const entryFeeWEI = ethers.BigNumber.from("100000000000000000"); // 0.0001 ETH in wei
 
   const toggleMenu = () => {
@@ -40,12 +42,38 @@ export default function NumberSelection() {
     abi: lotteryContract,
   };
 
+  const contractConfigFLOOR = {
+    address: FLOOR101_ADDRESS,
+    abi: nftContract,
+  };
+
+  const { data: getSupply, error: getFError } = useContractRead({
+    ...contractConfigFLOOR,
+    functionName: "totalSupply",
+  });
 
   const { data: getEth, error: lotteryNumberError } = useContractRead({
     ...contractConfig,
     functionName: "s_lotteryNumber",
   });
 
+
+  useEffect(() => {
+    // Define the provider
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+  
+    // Fetch the contract balance
+    const fetchContractBalance = async () => {
+      try {
+        const balance = await provider.getBalance(Lotto_ADDRESS);
+        setContractBalance(balance);
+      } catch (error) {
+        console.error('Error fetching contract balance:', error);
+      }
+    };
+
+    fetchContractBalance();
+  }, [Lotto_ADDRESS]);
 
   useEffect(() => {
     if (getEth) {
@@ -71,6 +99,7 @@ function handleNumGamesChange(event) {
   console.log('New numGames value:', newNumGames); // Add this line
   setNumGames(newNumGames);
 }
+
 
 
   const buyLottoTicket = async (numberOfTickets) => {
@@ -157,6 +186,29 @@ const enterLotto = async () => {
 };
 
  
+  function truncate(str, maxDecimalDigits) {
+    if (str.includes('.')) {
+        const parts = str.split('.');
+        return parts[0] + '.' + parts[1].slice(0, maxDecimalDigits);
+    }
+    return str;
+}
+
+  // Function to randomly select numbers for each game
+  const generateRandomNumbers = () => {
+    const randomNumbers = Array.from({ length: numGames }, () => []);
+
+    for (let gameIndex = 0; gameIndex < numGames; gameIndex++) {
+      const availableNumbers = Array.from({ length: 30 }, (_, index) => index + 1);
+      for (let i = 0; i < 3; i++) {
+        const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+        const selectedNumber = availableNumbers.splice(randomIndex, 1)[0];
+        randomNumbers[gameIndex].push(selectedNumber);
+      }
+    }
+   console.log("numGAmes in random - ", numGames)
+    setSelectedNumbers(randomNumbers);
+  };
 
   return (
     
@@ -180,9 +232,21 @@ const enterLotto = async () => {
   
   <div style={{ textAlign: 'center' }}>
   <h1>DGEN Lotto Draw #{ethSale.toString()}</h1>
-
+  <Image
+    src="/caeser.jpg"
+    alt="NFT"
+    width={250}
+    height={320}
+    style={{
+      display: 'block', // Make the image a block element for margin auto to work
+      margin: '0 auto', // Center align the image horizontally
+      borderRadius: '20%', // Make the border circular
+      border: '2px solid #ccc', // Add a border around the circular image
+    }}
+  />
 </div>
     <h1 className="second-h1" style={{ textAlign: 'center' }}>Live draw 8pm (Singapore timezone) Sunday 27 August. </h1>
+    <h1 className="second-h1" style={{ textAlign: 'center' }}>Current Prizepool {truncate(ethers.utils.formatEther((contractBalance )), 4)} MATIC</h1>
     <div style={{ textAlign: 'center'}}>Select 3 Numbers: 0.1 matic per game</div>
 
       {/* Add the select box to choose the number of games */}
@@ -201,6 +265,16 @@ const enterLotto = async () => {
   ))}
 </select>
       </div>
+
+      <div style={{ textAlign: "center", marginTop: "20px" }}>
+        <button
+          className="randomButton"
+          onClick={generateRandomNumbers}
+        >
+         Pick Numbers FOR ME
+        </button>
+      </div>
+
 
       {/* Generates the 30 numbers used to select from */}
       <div id="numberSelection">  
