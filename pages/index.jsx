@@ -74,11 +74,47 @@ useEffect(() => {
 }, [saleSucceeded]);
 
 
+// Function to handle number selection for each game
+function selectNumber(number, gameIndex) {
+  setSelectedNumbers((prevSelectedNumbers) => {
+    const updatedSelectedNumbers = [...prevSelectedNumbers];
+    if (!updatedSelectedNumbers[gameIndex]) {
+      updatedSelectedNumbers[gameIndex] = [];
+    }
+    if (updatedSelectedNumbers[gameIndex].includes(number)) {
+      // Number is already selected, remove it from the array
+      updatedSelectedNumbers[gameIndex] = updatedSelectedNumbers[gameIndex].filter(
+        (n) => n !== number
+      );
+    } else {
+      // Number is not selected, add it to the array
+      if (updatedSelectedNumbers[gameIndex].length < 3) {
+        updatedSelectedNumbers[gameIndex] = [
+          ...updatedSelectedNumbers[gameIndex],
+          number,
+        ];
+      }
+    }
+    console.log('Updated selectedNumbers array:', updatedSelectedNumbers); // Add this line
+    return updatedSelectedNumbers;
+  });
+}
 
+function handleNumGamesChange(event) {
+  const selectedValue = parseInt(event.target.value);
+  const maxNumGames = 10; // Maximum number of games
+  const newNumGames = Math.min(selectedValue, maxNumGames);
+  console.log('New numGames value:', newNumGames); // Add this line
+  setNumGames(newNumGames);
+}
 
-
-
-
+function truncate(str, maxDecimalDigits) {
+  if (str.includes('.')) {
+      const parts = str.split('.');
+      return parts[0] + '.' + parts[1].slice(0, maxDecimalDigits);
+  }
+  return str;
+}
 
   return (
     
@@ -99,13 +135,82 @@ useEffect(() => {
   {/* Add a vertical gap of 20px */}
   <div style={{ height: '20px' }} />
   <div className="container" style={{ backgroundColor: '#fff', padding: '10px', margin: '0 auto', borderRadius: '20px', maxWidth: '600px' }}>
+  
   <div style={{ textAlign: 'center' }}>
   <h1>DGEN Lotto Draw #{ethSale.toString()}</h1>
-  </div>
-    <h1 className="second-h1" style={{ textAlign: 'center' }}>We have moved to dgenlotto.com</h1>
-    <h1 className="second-h1" style={{ textAlign: 'center' }}>Current Prizepool  MATIC</h1>
+  <Image
+    src="/caeser.jpg"
+    alt="NFT"
+    width={250}
+    height={320}
+    style={{
+      display: 'block', // Make the image a block element for margin auto to work
+      margin: '0 auto', // Center align the image horizontally
+      borderRadius: '20%', // Make the border circular
+      border: '2px solid #ccc', // Add a border around the circular image
+    }}
+  />
+</div>
+    <h1 className="second-h1" style={{ textAlign: 'center' }}>Live draw 8pm (Singapore timezone) Sunday 27 August. </h1>
+    <h1 className="second-h1" style={{ textAlign: 'center' }}>Current Prizepool {truncate(ethers.utils.formatEther((contractBalance )), 4)} MATIC</h1>
     <div style={{ textAlign: 'center'}}>Select 3 Numbers: 0.1 matic per game</div>
 
+      {/* Add the select box to choose the number of games */}
+      <div style={{ textAlign: "center", marginBottom: "20px" }}>
+        <label htmlFor="numGamesSelect">Select Number of Games: </label>
+        <select
+  id="numGamesSelect"
+  value={numGames}
+  onChange={handleNumGamesChange}
+  className="select-box" // Apply the class name
+>
+  {[...Array(10)].map((_, num) => (
+    <option key={num + 1} value={num + 1}>
+      {num + 1}
+    </option>
+  ))}
+</select>
+      </div>
+
+
+
+
+      {/* Generates the 30 numbers used to select from */}
+      <div id="numberSelection">  
+  {Array.from({ length: numGames }).map((_, gameIndex) => (
+    <div key={gameIndex}>
+      <div id={`numberSelectionGame${gameIndex + 1}`}>
+        {[...Array(5)].map((_, rowIndex) => (
+          <div className="numberRow" key={rowIndex}>
+            {[...Array(6)].map((_, colIndex) => {
+              const number = rowIndex * 6 + colIndex + 1;
+              return (
+                <button
+                  key={number}
+                  className={`numberButton ${
+                    selectedNumbers[gameIndex]?.includes(number) ? "selected" : ""
+                  }`}
+                  onClick={() => selectNumber(number, gameIndex)}
+                >
+                  {number}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      {/* Display selected numbers for each game */}
+      <div style={{ textAlign: "center" }}>
+        Game {gameIndex + 1}:{" "}
+        {selectedNumbers[gameIndex]?.join(", ") || "No numbers selected"}
+      </div>
+    </div>
+  ))}
+</div>
+
+
+
+    {/* Submit button */}
 
   </div>
 
