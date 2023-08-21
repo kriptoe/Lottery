@@ -220,22 +220,6 @@ const enterLotto = async () => {
     return str;
 }
 
-  // Function to randomly select numbers for each game
-  const generateRandomNumbers = () => {
-    const randomNumbers = Array.from({ length: numGames }, () => []);
-
-    for (let gameIndex = 0; gameIndex < numGames; gameIndex++) {
-      const availableNumbers = Array.from({ length: 30 }, (_, index) => index + 1);
-      for (let i = 0; i < 3; i++) {
-        const randomIndex = Math.floor(Math.random() * availableNumbers.length);
-        const selectedNumber = availableNumbers.splice(randomIndex, 1)[0];
-        randomNumbers[gameIndex].push(selectedNumber);
-      }
-    }
-   console.log("numGAmes in random - ", numGames)
-    setSelectedNumbers(randomNumbers);
-  };
-
   return (
     
 <div className="second-background-container">
@@ -280,16 +264,6 @@ const enterLotto = async () => {
   ))}
 </select>
       </div>
-
-      <div style={{ textAlign: "center", marginTop: "20px" }}>
-        <button
-          className="randomButton"
-          onClick={generateRandomNumbers}
-        >
-         Pick Numbers FOR ME
-        </button>
-      </div>
-
 
       {/* Generates the 30 numbers used to select from */}
       <div id="numberSelection">  
