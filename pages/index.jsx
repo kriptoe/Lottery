@@ -4,6 +4,8 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useContractRead } from "wagmi";
 import { ethers } from "ethers";
 //import lotteryContract from "../contracts/Lottery.json"; // Raw ABI import (pulled from etherscan)
+import lotteryContract from "../contracts/Lottery.json"; // Raw ABI import (pulled from etherscan)//
+import nftContract from "../contracts/NFT.json"; // Raw ABI import (pulled from etherscan)
 import Navbar from "./Navbar"; // Import the Navbar component
 import styles from "../styles/index.module.css";
 import CountdownTimer2 from "./timer";
@@ -12,8 +14,8 @@ import Image from 'next/image';
 
 export default function NumberSelection() {
 
-  const FLOOR101_ADDRESS = "0x3A34a686148dAAb2A473D63b077c5AaF44cb8C2D";   // sep polygon  
-  const Lotto_ADDRESS = "0xd58b6c882D163b4D9D63FC4F3f86Be8dad7DF36a";  // polygon
+ const FLOOR101_ADDRESS = "0xdC9E96d58903289E2A4771c63fa930d9d56384bA";   // sep polygon  
+ const Lotto_ADDRESS = "0x55Ff01197C771E1f7f97772aC9860C1F00C5F083";
 
   //const {address, isConnected} = useAccount();
   const [ethSale, setEthSale] = useState(0);  // cost of NFTs being purchased
@@ -39,7 +41,38 @@ export default function NumberSelection() {
     setIsMenuOpen(!isMenuOpen);
   };
 
- 
+  const contractConfig = {
+    address: Lotto_ADDRESS,
+    abi: lotteryContract,
+  };
+
+  const contractConfigFLOOR = {
+    address: FLOOR101_ADDRESS,
+    abi: nftContract,
+  };
+
+  const { data: getEth, error: lotteryNumberError } = useContractRead({
+    ...contractConfig,
+    functionName: "s_lotteryNumber",
+  });
+
+  useEffect(() => {
+    if (getEth) {
+      let temp = getEth;
+      setEthSale(temp);
+    }
+    // Initialize selectedNumbers state with an array of arrays for each game
+    setSelectedNumbers(Array.from({ length: numGames }, () => []));
+  }, [getEth, numGames]);
+
+useEffect(() => {
+  if (saleSucceeded) {
+    // Reset the number of games to 1
+    setNumGames(1);
+    setNftPurchased(true); // Set nftPurchased to true to display the NFT image
+  }
+}, [saleSucceeded]);
+
 
 
 
@@ -66,6 +99,9 @@ export default function NumberSelection() {
   {/* Add a vertical gap of 20px */}
   <div style={{ height: '20px' }} />
   <div className="container" style={{ backgroundColor: '#fff', padding: '10px', margin: '0 auto', borderRadius: '20px', maxWidth: '600px' }}>
+  <div style={{ textAlign: 'center' }}>
+  <h1>DGEN Lotto Draw #{ethSale.toString()}</h1>
+  </div>
     <h1 className="second-h1" style={{ textAlign: 'center' }}>We have moved to dgenlotto.com</h1>
     <h1 className="second-h1" style={{ textAlign: 'center' }}>Current Prizepool  MATIC</h1>
     <div style={{ textAlign: 'center'}}>Select 3 Numbers: 0.1 matic per game</div>
