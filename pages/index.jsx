@@ -4,8 +4,6 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useContractRead } from "wagmi";
 import { ethers } from "ethers";
 //import lotteryContract from "../contracts/Lottery.json"; // Raw ABI import (pulled from etherscan)
-import lotteryContract from "../contracts/LotteryPolygon.json"; // Raw ABI import (pulled from etherscan)//
-import nftContract from "../contracts/NFTPolygon.json"; // Raw ABI import (pulled from etherscan)
 import Navbar from "./Navbar"; // Import the Navbar component
 import styles from "../styles/index.module.css";
 import CountdownTimer2 from "./timer";
@@ -41,211 +39,13 @@ export default function NumberSelection() {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const contractConfig = {
-    address: Lotto_ADDRESS,
-    abi: lotteryContract,
-  };
-
-  const contractConfigFLOOR = {
-    address: FLOOR101_ADDRESS,
-    abi: nftContract,
-  };
-
-  const { data: getSupply, error: getFError } = useContractRead({
-    ...contractConfigFLOOR,
-    functionName: "totalSupply",
-  });
-
-  const { data: getEth, error: lotteryNumberError } = useContractRead({
-    ...contractConfig,
-    functionName: "s_lotteryNumber",
-  });
-
-  const { data: getEndDate, error: getEndDateError } = useContractRead({
-    ...contractConfig,
-    functionName: "claimPeriodLeft",
-  });
-
-  
-  useEffect(() => {
-    // Define the provider
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-  
-    // Fetch the contract balance
-    const fetchContractBalance = async () => {
-      try {
-        const balance = await provider.getBalance(Lotto_ADDRESS);
-        setContractBalance(balance);
-      } catch (error) {
-        console.error('Error fetching contract balance:', error);
-      }
-    };
-
-    fetchContractBalance();
-  }, [Lotto_ADDRESS]);
-
-  useEffect(() => {
-    if (getEndDate) {
-      let temp = getEndDate;
-      setEndDate(temp);
-    }
-  }, [getEndDate]);
-
-  useEffect(() => {
-    if (getEth) {
-      let temp = getEth;
-      setEthSale(temp);
-    }
-    // Initialize selectedNumbers state with empty arrays for each game
-    setSelectedNumbers(Array.from({ length: numGames }, () => []));
-  }, [getEth, numGames]);
-
-useEffect(() => {
-  if (saleSucceeded) {
-    // Reset the number of games to 1
-    setNumGames(1);
-    setNftPurchased(true); // Set nftPurchased to true to display the NFT image
-  }
-}, [saleSucceeded]);
-
-function handleNumGamesChange(event) {
-  const selectedValue = parseInt(event.target.value);
-  const maxNumGames = 10; // Maximum number of games
-  const newNumGames = Math.min(selectedValue, maxNumGames);
-  setNumGames(newNumGames);
-}
-
-
-  useEffect(() => {
-    if (saleSucceeded) {
-      if (typeof window !== "undefined") {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const floor101Contract = new ethers.Contract(FLOOR101_ADDRESS, nftContract, provider);
-  
-        floor101Contract.on("mintEvent", async (sender, NFTid) => {
-          console.log("mintEvent:", sender, NFTid.toString());
-          const nftId = NFTid.toString();
-          try {
-            const imageUrl = await fetchTokenURI(nftId, floor101Contract);
-            if (imageUrl) {
-              setNftImageUrl(imageUrl);
-            }
-          } catch (error) {
-            console.log("Error fetching token URI:", error);
-          }
-        });
-      }
-    }
-  }, [saleSucceeded]);
-
-
-  const buyLottoTicket = async (numberOfTickets) => {
-    let nftID;
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
-    const marketContract = new ethers.Contract(Lotto_ADDRESS, lotteryContract, provider);
-    const marketWithSigner = marketContract.connect(signer);
-  
-    try {
-      // Flatten the selectedNumbers array to a 1-dimensional array
-      const flatSelectedNumbers = selectedNumbers.flat();
-      // Calculate the total price based on the number of tickets
-      const totalPrice = ethers.utils.parseEther((entryFee * numberOfTickets).toString());
-
-      // Call enterLotteryBULK function with the flattened array and the dynamic price
-      let tx = await marketWithSigner.enterLotteryBULK(flatSelectedNumbers, { value: totalPrice });
-      setSubmitButtonText('Pending');
-      setIsPulsing(true); // Start the pulse animation
-      const receipt = await tx.wait();
-      setTxHash(`https://polygonscan.com/tx/${tx.hash}`);
-      // Reset the selected numbers after a successful transaction
-      setSelectedNumbers(Array.from({ length: numGames }, () => []));
-      setNftPurchased(true); // Set nftPurchased to true after a successful transaction
-
-    } catch (e) {
-      if (e.code === "UNPREDICTABLE_GAS_LIMIT") {
-        alert("Sorry, an error occurred while estimating gas. Has the lottery ended?.", e);
-      }
-     // alert(e);
-    } finally {
-      // Reset the submit button text after the transaction completes
-      setSubmitButtonText('Submit');
-      setIsPulsing(false); // Start the pulse animation
-      setSaleSucceeded(true); // Set saleSucceeded to true to trigger the useEffect
-     // Reset numGames to 1 after the successful transaction
-      setNumGames(1);
-    }
-  };
-  
-// Function to handle number selection for each game
-function selectNumber(number, gameIndex) {
-  setSelectedNumbers((prevSelectedNumbers) => {
-    const updatedSelectedNumbers = [...prevSelectedNumbers];
-    if (!updatedSelectedNumbers[gameIndex]) {
-      updatedSelectedNumbers[gameIndex] = [];
-    }
-    if (updatedSelectedNumbers[gameIndex].includes(number)) {
-      // Number is already selected, remove it from the array
-      updatedSelectedNumbers[gameIndex] = updatedSelectedNumbers[gameIndex].filter(
-        (n) => n !== number
-      );
-    } else {
-      // Number is not selected, add it to the array
-      if (updatedSelectedNumbers[gameIndex].length < 3) {
-        updatedSelectedNumbers[gameIndex] = [
-          ...updatedSelectedNumbers[gameIndex],
-          number,
-        ];
-      }
-    }
-    return updatedSelectedNumbers;
-  });
-}
-
-// This function makes an entry into the lotto draw
-const enterLotto = async () => {
-  const selectedNumbersCount = selectedNumbers.reduce(
-    (total, numbers) => total + (numbers ? numbers.length : 0),
-    0
-  );
-  
-  if (selectedNumbersCount !== numGames * 3) {
-    alert('Please select exactly 3 numbers for each game.');
-    return;
-  }
-
-  if (endDate === 0) {
-    // Show a pop-up alert to notify the user that the lottery has ended
-    window.alert("The lottery has ended. Please try again in the next round.");
-    return; // Return early to prevent further execution of the function
-  }
-  buyLottoTicket(numGames);
-};
-
  
-  function truncate(str, maxDecimalDigits) {
-    if (str.includes('.')) {
-        const parts = str.split('.');
-        return parts[0] + '.' + parts[1].slice(0, maxDecimalDigits);
-    }
-    return str;
-}
 
-  // Function to randomly select numbers for each game
-  const generateRandomNumbers = () => {
-    const randomNumbers = Array.from({ length: numGames }, () => []);
 
-    for (let gameIndex = 0; gameIndex < numGames; gameIndex++) {
-      const availableNumbers = Array.from({ length: 30 }, (_, index) => index + 1);
-      for (let i = 0; i < 3; i++) {
-        const randomIndex = Math.floor(Math.random() * availableNumbers.length);
-        const selectedNumber = availableNumbers.splice(randomIndex, 1)[0];
-        randomNumbers[gameIndex].push(selectedNumber);
-      }
-    }
 
-    setSelectedNumbers(randomNumbers);
-  };
+
+
+
 
   return (
     
@@ -266,113 +66,14 @@ const enterLotto = async () => {
   {/* Add a vertical gap of 20px */}
   <div style={{ height: '20px' }} />
   <div className="container" style={{ backgroundColor: '#fff', padding: '10px', margin: '0 auto', borderRadius: '20px', maxWidth: '600px' }}>
-    <h1 style={{ textAlign: 'center' }}>POLYGON Lotto Draw #{ethSale.toString()}</h1>
-    <h1 className="second-h1" style={{ textAlign: 'center' }}> Draw ends in </h1>
-    <h1 className="second-h1" style={{ textAlign: 'center' }}><CountdownTimer2 targetDate={targetDate} /></h1>
-    <h1 className="second-h1" style={{ textAlign: 'center' }}>Current Prizepool {truncate(ethers.utils.formatEther((contractBalance )), 4)} MATIC</h1>
+    <h1 className="second-h1" style={{ textAlign: 'center' }}>We have moved to dgenlotto.com</h1>
+    <h1 className="second-h1" style={{ textAlign: 'center' }}>Current Prizepool  MATIC</h1>
     <div style={{ textAlign: 'center'}}>Select 3 Numbers: 0.1 matic per game</div>
 
-      {/* Add the select box to choose the number of games */}
-      <div style={{ textAlign: "center", marginBottom: "20px" }}>
-        <label htmlFor="numGamesSelect">Select Number of Games: </label>
-        <select
-  id="numGamesSelect"
-  value={numGames}
-  onChange={handleNumGamesChange}
-  className="select-box" // Apply the class name
->
-  {[...Array(10)].map((_, num) => (
-    <option key={num + 1} value={num + 1}>
-      {num + 1}
-    </option>
-  ))}
-</select>
-      </div>
 
-      <div style={{ textAlign: "center", marginTop: "20px" }}>
-        <button
-          className="randomButton"
-          onClick={generateRandomNumbers}
-        >
-         Pick Numbers FOR ME
-        </button>
-      </div>
-
-
-      {/* Generates the 30 numbers used to select from */}
-      <div id="numberSelection">  
-  {Array.from({ length: numGames }).map((_, gameIndex) => (
-    <div key={gameIndex}>
-      <div id={`numberSelectionGame${gameIndex + 1}`}>
-        {[...Array(5)].map((_, rowIndex) => (
-          <div className="numberRow" key={rowIndex}>
-            {[...Array(6)].map((_, colIndex) => {
-              const number = rowIndex * 6 + colIndex + 1;
-              return (
-                <button
-                  key={number}
-                  className={`numberButton ${
-                    selectedNumbers[gameIndex]?.includes(number) ? "selected" : ""
-                  }`}
-                  onClick={() => selectNumber(number, gameIndex)}
-                >
-                  {number}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-      {/* Display selected numbers for each game */}
-      <div style={{ textAlign: "center" }}>
-        Game {gameIndex + 1}:{" "}
-        {selectedNumbers[gameIndex]?.join(", ") || "No numbers selected"}
-      </div>
-    </div>
-  ))}
-</div>
-
-
-
-    {/* Submit button */}
-    <button
-      className={`submitButton ${isPulsing ? 'pulsing' : ''}`}
-      style={{
-        display: 'block',
-        margin: '0 auto',
-        padding: '10px 20px',
-        fontSize: '16px',
-        borderRadius: '5px',
-        border: 'none',
-        backgroundColor: '#0d6efd',
-        color: '#fff',
-        cursor: 'pointer',
-      }}
-      onClick={enterLotto}
-      onMouseOver={(e) => (e.target.style.backgroundColor = '#FFA500')}
-      onMouseOut={(e) => (e.target.style.backgroundColor = '#0d6efd')}
-    >
-      {submitButtonText}
-    </button>
   </div>
-  <div style={{ display: 'flex', justifyContent: 'center' }}>
-  {nftPurchased && nftImageUrl && (
-    <Image src={nftImageUrl} alt="NFT" width={350} height={500} />
-  )}
-</div>
-  {saleSucceeded && (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <a
-        href={txHash}
-        target="_blank"
-        rel="noreferrer"
-        className="underline underline-offset-2"
-        style={{ display: 'block' }}
-      >
-        View TX on block explorer
-      </a>
-    </div>
-  )}
+
+
   {/* CSS Styles */}
   <style>
     {`
